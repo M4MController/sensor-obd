@@ -1,0 +1,5 @@
+smbus==1.1.post2
+gpiozero==1.5.1
+termcolor==1.1.0
+obd==0.7.1
+requests==2.23.0
