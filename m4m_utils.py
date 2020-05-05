@@ -10,9 +10,16 @@ logger = logging.getLogger(__name__)
 session = None
 
 
-def json_send(uri, sensor_id, data):
+def init_sensor(uri, sensor_uuid):
+    return 200 <= requests.post(
+        '{uri}/private/sensor/{sensor_uuid}/register'.format(uri=uri, sensor_uuid=sensor_uuid),
+        json={'sensor_type': 5, 'status': 1},
+    ).status_code < 300
+
+
+def json_send(uri, sensor_uuid, data):
     return requests.post(
-        '{uri}/private/sensor/{sensor_id}/data'.format(uri=uri, sensor_id=sensor_id),
+        '{uri}/private/sensor/{sensor_uuid}/data'.format(uri=uri, sensor_uuid=sensor_uuid),
         json={'value': data},
     )
 
