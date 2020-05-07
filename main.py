@@ -26,7 +26,7 @@ def get_obd_con():
 
 def init(uri, sensor_uuid):
     while not init_sensor(uri, sensor_uuid):
-        pass
+        time.sleep(1)
 
 
 def main():
