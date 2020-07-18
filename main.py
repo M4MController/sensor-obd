@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
+
 import logging
-import os
 import sys
 import time
-import uuid
 
 from random import random
 
+from hardware import generate_uuid
 from m4m_utils import *
 from m4m_obd import *
 
@@ -31,7 +31,7 @@ def init(uri, sensor_uuid):
 
 def main():
     if not os.path.exists('uuid'):
-        sensor_uuid = uuid.uuid4().hex
+        sensor_uuid = generate_uuid()
         with open('uuid', 'w+') as f:
             f.write(sensor_uuid)
     else:
