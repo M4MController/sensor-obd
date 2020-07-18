@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
+import typing
+
 import obd
 import os
 
@@ -103,7 +105,7 @@ command_table = [
 logger = logging.getLogger(__name__)
 
 
-def obd_start():
+def obd_start() -> obd.OBD:
     logger.info("Connecting OBD...")
     obd_con = obd.OBD(os.environ.get('DEVICE', None))
     if obd_con.is_connected():
@@ -114,7 +116,7 @@ def obd_start():
     return obd_con 
 
 
-def obd_read(con):
+def obd_read(con: obd.OBD) -> typing.Dict[str, str]:
     data = {}
     for cmd in command_table:
         response = con.query(cmd)

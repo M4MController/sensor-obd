@@ -56,7 +56,8 @@ def main():
         elif obd_con.is_connected():
             try:
                 data = obd_read(obd_con)
-                json_send(uri, sensor_uuid, data)
+                if data:
+                    json_send(uri, sensor_uuid, data)
             except Exception as e:
                 logger.info("Failed reading data from obd! %s", e)
         else:
