@@ -1,31 +1,56 @@
-import itertools
 import logging
 import os
 import typing
 
 from collections import namedtuple
-from random import random
 
 import obd
+from obd.OBDResponse import Status, StatusTest, Monitor, MonitorTest
+
+from stubs import ObdStub
 
 logger = logging.getLogger(__name__)
 
 USE_STUBS = int(os.environ.get('USE_STUBS', "0"))
 
-command_table = list(filter(lambda x: x is not None, itertools.chain(*obd.commands.modes)))
-
 ResponseStub = namedtuple("ResponseStub", ["value"])
 
 
-class ObdStub:
-	def __init__(self, _):
-		logger.info("Stub created")
+def deserialize_value(name, test) -> str:
+	if isinstance(test, StatusTest):
+		if test.available:
+			if test.complete:
+				result = True
+			else:
+				result = False
+			return {name: result}
+		return {}
+	elif isinstance(test, MonitorTest):
+		return test.__dict__
+	else:
+		return {name: test}
 
-	def is_connected(self):
-		return True
 
-	def query(self, _) -> ResponseStub:
-		return ResponseStub(random() * 100)
+def deserialize(cmd, response) -> typing.Optional[typing.Dict[str, str]]:
+	value = response.value
+	if value is None:
+		return None
+	name = cmd.name.lower()
+
+	if isinstance(value, Status) or isinstance(value, Monitor):
+		result = {}
+		for key, test_value in value.__dict__.items():
+			if not key or key.startswith('_'):
+				continue
+
+			data = deserialize_value(key, test_value)
+
+			for test, test_result_value in data.items():
+				if test_result_value is not None:
+					result[f"{name}_{test}"] = str(test_result_value)
+		return result
+	else:
+		return {name: str(value)}
 
 
 class Car:
@@ -47,12 +72,14 @@ class Car:
 
 	def obd_read(self) -> typing.Dict[str, str]:
 		data = {}
-		for cmd in command_table:
-			response = self._obd_con.query(cmd)
-			logger.debug("Record '%s' received: %s", cmd.name, response.value)
-			if response.value is not None:
-				data[cmd.name.lower()] = str(response.value)
 
-		logger.info("%d records read", len(data))
+		for cmd in self._obd_con.supported_commands:
+			response = self._obd_con.query(cmd)
+
+			values = deserialize(cmd, response)
+			if values is not None:
+				data.update(**values)
+
+		logger.info("%d records read: %s", len(data), data)
 
 		return data
